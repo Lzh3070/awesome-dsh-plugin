@@ -207,8 +207,13 @@ jobs:
       # Still no repository write: the version and the content hash are set
       # in the runner's working copy and never committed, so the invariant at
       # the top of this file holds.
+      # Publish steps are upstream-only: npm trusted publishing (OIDC) is
+      # configured for awesome-dsh-plugin/awesome-dsh-plugin alone, so a fork
+      # running this workflow nightly would fail here every time — and the
+      # failed step also skips the cache-save post-steps below, throwing away
+      # each night's probe work. Skip on forks instead.
       - name: publish the catalog to npm
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: github.repository == 'awesome-dsh-plugin/awesome-dsh-plugin' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         # Trusted publishing (OIDC) — the id-token permission above is what
         # authorizes it, so there is no token to leak or rotate.
         run: |
@@ -221,7 +226,7 @@ jobs:
       # catalog tarball would multiply every consumer's daily download for
       # data most never request. See scripts/publish-updates.mjs.
       - name: publish the update notes to npm
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: github.repository == 'awesome-dsh-plugin/awesome-dsh-plugin' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
           npm install -g npm@latest  # trusted publishing needs npm >= 11.5
           node scripts/publish-updates.mjs
